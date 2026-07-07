@@ -15,10 +15,6 @@ const COHORT_LABELS: Record<CohortTag, string> = {
 
 export default function PostDriveRecap() {
   const scores = useMemo(() => scoreAll(DONORS, FORECAST), [])
-  const scoreByDonor = useMemo(() => {
-    const m = new Map(scores.map(s => [s.donorId, s]))
-    return m
-  }, [scores])
 
   const attended = MOCK_OUTCOMES.filter(o => o.actualStatus === 'attended').length
   const noShows = MOCK_OUTCOMES.filter(o => o.actualStatus === 'no_show').length

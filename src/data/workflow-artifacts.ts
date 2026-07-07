@@ -4,6 +4,7 @@ import assumptionMap from '../../workflow/01b-assumption-map.md?raw'
 import systemDesign from '../../workflow/02-system-design.md?raw'
 import wireframes from '../../workflow/03-wireframes.md?raw'
 import designSpec from '../../workflow/04-design-spec.md?raw'
+import buildNotes from '../../workflow/05-build-notes.md?raw'
 
 import prdAgent from '../../.claude/agents/phase-1-prd.md?raw'
 import assumptionAgent from '../../.claude/agents/phase-1b-assumption-map.md?raw'
@@ -111,9 +112,8 @@ export const PHASES: WorkflowPhase[] = [
     inputSummary: 'all upstream workflow/*.md',
     outputPath: 'src/ + workflow/05-build-notes.md',
     humanEdits:
-      'In progress. Rule-based scoring live, canned LLM responses in place, interactive dashboard + donor detail + SMS composer + recap all working.',
-    artifactMarkdown:
-      '<pending — Phase 5 in flight. Build notes will land here after the app is done.>',
+      'Completed. Rule-based scoring, canned LLM responses, interactive dashboard, donor detail, SMS composer, recap, and /process page all working. BYOK live regenerate on Morning Brief and SMS Composer.',
+    artifactMarkdown: buildNotes,
     agentPromptMarkdown: buildAgent,
     icon: '💻',
   },
