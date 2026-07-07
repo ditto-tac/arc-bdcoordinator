@@ -1,7 +1,7 @@
 # PRD — Blood Drive Coordinator Copilot
 
 **Author:** Test Kitchen (Phase 1 agent, human-reviewed)
-**Version:** v2 (see Change Log)
+**Version:** v3 (see Change Log)
 **Status:** Draft — awaiting Phase 2
 **Companion artifacts:** `00-opportunity-brief.md`, `01b-assumption-map.md`
 
@@ -47,16 +47,33 @@ Blood drive coordinators run donor collection drives at schools, community cente
 ## 7. Hypotheses to test
 
 - **H1:** Coordinators trust the risk score enough to act on it *only when* the underlying reasons are visible. — measurable via observation + click-through on high-risk donors during pilot. (tests: risk-with-reasons capability)
-- **H2:** Personalized SMS reminders outperform generic reminders by ≥5 percentage points on show-up rate. — measurable via A/B during pilot drives. (tests: personalized SMS capability)
+- **H2:** Personalized SMS reminders to high-risk donors lift *that segment's* attendance vs. matched control. — measurable via A/B on the high-risk cohort during pilot drives. (tests: personalized SMS capability, focused on the segment we can actually influence)
 - **H3:** Weather forecast at slot-level is a materially useful signal for no-show prediction (not just noise around a base rate). — measurable via backfill correlation or observed pilot outcomes. (tests: signal quality behind the score)
 - **H4:** Coordinators read the Morning Brief before scanning the roster when it's the first thing they see. — measurable via observation. (tests: Morning Brief capability)
+- **H5:** Coordinators using the Copilot hit their drive's collection target on a higher share of drives than baseline. — measurable via drive-level target-attainment rate across pilot drives vs. matched historical baseline. (tests: whole product; this is the outcome the coordinator is graded on)
 
 ## 8. Success metrics (test-kitchen scope)
 
+We measure the outcome we're trying to move — *hitting drive targets* — not the environmental condition (no-show rate) that varies day to day.
+
+**Primary outcome:**
+- **Target Attainment Rate.** Share of pilot drives collecting ≥100% of their assigned unit target. Baseline: matched historical drives at the same sites where available; otherwise a matched-drive control cohort during the pilot period.
+
+**Secondary — behavioral signal on the segment we can influence (tests H2):**
+- **High-Risk Attendance Lift.** Attendance rate of high-risk donors who received a Copilot-drafted personalized SMS, versus a matched control cohort (generic SMS or none). Directional read given small pilot n.
+
+**Secondary — trust signal (tests H1):**
+- ≥2 of 3 coordinators say the Copilot's risk explanations informed how they set overbook and outreach decisions for the drive.
+
+**Secondary — efficiency:**
+- Coordinator morning prep time reduced from ~90 min to ≤30 min.
+
+**Diagnostic (not a KPI):**
+- **Overbook accuracy.** |predicted no-show count − actual no-show count| ÷ drive target. Tells us whether the copilot is helping coordinators calibrate their overbook, and where the score is systematically over/under.
+- **Environmental no-show rate.** Tracked for context — but explicitly not our success criterion. If the copilot works, target attainment improves *regardless* of the day's no-show rate.
+
+**Adoption gate:**
 - ≥3 coordinators complete a pilot drive using the app end-to-end (baseline: 0).
-- ≥2 of 3 coordinators say the score explanation is trustworthy (qualitative signal for H1).
-- Show-up rate on high-risk donors receiving personalized SMS is directionally higher than control (H2 signal).
-- Coordinator morning prep time reduced from ~90 min to ≤30 min for pilot users.
 
 ## 9. Out of scope (v0)
 
@@ -91,12 +108,14 @@ Blood drive coordinators run donor collection drives at schools, community cente
 |---------|------|--------|--------|
 | v1 | 2026-07-06 | Initial draft | Seeded from `00-opportunity-brief.md` |
 | v2 | 2026-07-06 | Restructured to solution-forward (§3), current/future state workflows (§4-§5), capability language (§6); softened no-show sourcing with citations; removed implementation details (LLM strategy, hosting choices — moved to Phase 2); added `[Resolved]` sub-list in §10 | Reviewer feedback: PRD should be capability-forward and behavior-only; PRD is a living artifact, not a blueprint |
+| v3 | 2026-07-06 | Reframed success metrics around Target Attainment (the outcome coordinators are graded on) rather than no-show rate (the environment). Added H5 (target attainment). Refined H2 to focus on the high-risk cohort (the segment the copilot can influence). Moved no-show rate to Diagnostic. | Reviewer feedback: "no-show rate isn't ours to control — measure how well we compensated for it." Agent also updated with a new operating principle: measure the goal, not the environment. |
 
 ## PM notes for the reviewer
 
 - The Morning Brief is currently the load-bearing capability for demo — if H4 fails in the pilot, we'd rebuild v1 around the roster-first pattern instead. Worth flagging in the interview close.
 - I moved anything that named a specific technology (models, hosting, prompt strategy) out of the PRD into Phase 2, where it belongs. This makes the PRD portable across implementation choices — if a v1 build wants to try a different model or a different platform, the PRD still holds.
 - Kept the Sirdifield 2.5× retention citation prominent in §1 because it's the strongest lever for "why does this matter beyond one drive."
+- On metrics: worth calling out in the interview that we're measuring "did the coordinator hit target *despite* no-shows," not "did no-shows go down." Any interviewer with ops instincts will notice the distinction and it's a signal that the PM understands what their user is graded on.
 
 ---
 
