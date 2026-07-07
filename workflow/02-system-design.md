@@ -30,21 +30,61 @@ The runtime is a static React SPA. External APIs are called browser-side. LLM ou
 
 ## 2. Data model
 
+The model is shaped to support a returning-donor learning loop from day one, even though v0 only seeds a subset of history. Every entity should be able to answer: *how does this get better with the next interaction?*
+
 ```ts
 Drive       { id, name, addr, lat(R), lng(R), date, target_units(R), slots: Slot[] }
-Slot        { time, donor_id? }
-Donor       { id, name, phone, email, blood_type, first_time, past_no_shows,
-              distance_mi, last_donation, confirmed_at? }
+Slot        { time, donor_id }
+
+Donor       { id, name, phone, email, blood_type,
+              // static + slowly-changing
+              first_time, cohort_tags: string[],   // 'campus'|'workplace'|'community'|'mobile'|'lapsed_6mo'|...
+              donation_count, cadence_days_avg,    // lifetime + typical gap
+              distance_mi,
+              // behavioral history
+              past_no_shows, last_donation, confirmed_at?,
+              last_deferral?: { date, reason, eligible_after },
+              // preferences (respected always)
+              preferred_channel: 'sms'|'email'|'both'|null,
+              opt_out_reminders(R): boolean }
+
 Forecast    { hour, temp_f, precip_pct, condition }  // from NWS
+
 RiskScore   (D) { donor_id, score_0_100, tier: 'High'|'Med'|'Low',
                   top_factors: string[], recommended_action }
+
 SMSDraft    (D) { donor_id, text, char_count, tone_tags: string[],
                   source: 'canned'|'live', generated_at }
-DriveOutcome (post-drive) { drive_id, predicted_no_shows,
-                            actual_no_shows, delta_by_factor }
+
+// --- Learning loop entities (new) ---
+
+DonorMessage { id, donor_id, drive_id, sent_at,
+               source: 'canned'|'live'|'generic',
+               template_key, opened_at?, replied_at?, reply_sentiment? }
+
+CoordinatorOverride { donor_id, drive_id, original_tier, new_tier,
+                      reason: 'coord_knowledge'|'donor_confirmed'|'other',
+                      note?, coordinator_id, at }
+
+DriveOutcome (per donor) { drive_id, donor_id, predicted_tier,
+                           actual_status: 'attended'|'no_show'|'walkin'|'canceled',
+                           sms_sent?, sms_source?, override_applied? }
 ```
 
-R = required, D = derived. All entities live in-memory; seed data ships in `src/data/seed.ts`.
+R = required, D = derived. All entities live in-memory for v0; seed data ships in `src/data/seed.ts`.
+
+**What v0 seeds vs. what the model supports:**
+
+| Field / entity | v0 seeds | Supported by model for v1+ |
+|---|:---:|:---:|
+| Static donor fields (name, blood_type, distance) | ✅ | ✅ |
+| `donation_count`, `cadence_days_avg` | ✅ (synthetic 1-24 range) | ✅ |
+| `cohort_tags` | ✅ (2-3 tags per donor) | ✅ |
+| `preferred_channel`, `opt_out_reminders` | ✅ (default 'sms', 0 opt-outs) | ✅ |
+| `last_deferral` | ⚠️ 20% seeded | ✅ |
+| `DonorMessage` history | ❌ | ✅ |
+| `CoordinatorOverride` | ❌ (empty; captured live during use) | ✅ |
+| `DriveOutcome` | ✅ (one mock drive, backfilled for Post-Drive Recap) | ✅ |
 
 ## 3. External API integrations
 
@@ -99,8 +139,10 @@ For each ⚠️ assumption from Phase 1.5, this design carries a specific decisi
 - **A2 — Score trust hinges on visible reasons.** The RiskScore data model exposes `top_factors[]` as a first-class field; every risk badge in the UI must open a "why this score" panel citing those factors. If we ship without the panel we cannot test the assumption.
 - **A4 — Weather signal materiality.** The scoring model isolates weather-driven components (precip, temp) into two named factors so we can compute their contribution and observe whether they correlate with observed no-shows in pilot data.
 - **A1 — Coordinators check phone during downtime.** Mobile-first responsive layout; all screens usable on a phone browser. If pilot observation invalidates this, the copilot pivots to morning-prep-only.
-- **A14 — Disparate outreach across donor cohorts.** Scoring is rule-based (not black-box ML) so features are auditable pre-pilot. UI never surfaces demographic factors as reasons. Post-drive recap includes attendance disaggregated by first-time flag so a coordinator can spot pattern early.
+- **A14 — Disparate outreach across donor cohorts.** Scoring is rule-based (not black-box ML) so features are auditable pre-pilot. UI never surfaces demographic factors as reasons. Post-drive recap includes attendance disaggregated by `cohort_tags` so a coordinator can spot pattern early.
 - **A3 — Personalized SMS lift.** Every SMS Draft carries a `source` tag so pilot A/B analysis can distinguish generic vs. personalized outreach at the cohort level.
+- **A15 — Coordinators record notes on specific donors.** `CoordinatorOverride` entity + free-text `note` field give the coordinator a place to explain their judgment; the copilot listens back.
+- **A16 — Coordinator overrides are directionally correct.** `CoordinatorOverride` history tied to `DriveOutcome.actual_status` lets us measure agreement between coordinator judgment and actual outcomes over time — the foundation of a real learning loop.
 
 ## 8. Alternatives rejected
 

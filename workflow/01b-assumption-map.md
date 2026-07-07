@@ -22,6 +22,8 @@
 | A12 | Red Cross legal will not require HIPAA compliance for a synthetic-data POC | B | H | S | ✅ Monitor | Already confirmed in JD ("test kitchen" language + POC scope) |
 | A13 | Coordinators do NOT need a native mobile app for a v0 (responsive web is enough for pilot) | U | M | W | Test after top risks | Ask coordinators about phone browser habits in same interviews |
 | A14 | This copilot doesn't create disparate outreach across donor demographics | B | H | W | ⚠️ Test soon | Feature-audit scoring inputs; pilot metrics disaggregated by donor cohort |
+| A15 | Coordinators will record notes on specific donors when they override the risk score (i.e., the learning-loop UI actually gets used) | U | M | W | Test after top risks | Include an override + note affordance in prototype; observe coordinators in 2 pilot drives |
+| A16 | When coordinators override the risk score, their override is directionally correct — i.e., a useful learning signal, not noise | V | H | W | ⚠️ Test soon | Compare CoordinatorOverride outcomes vs. actual DriveOutcome across 4 pilot drives |
 
 ## Top 5 riskiest (test immediately)
 
@@ -56,6 +58,12 @@ These are the assumptions where a wrong answer kills the product.
 - **Cheapest experiment:** A/B during 4 pilot drives. Test-kitchen has enough donor volume to see a directional signal.
 - **Validated looks like:** ≥3pp lift observed across ≥2 drives.
 - **Invalidated looks like:** Kill the SMS composer; refocus on the morning brief and overbook recommendation.
+
+### A16: Coordinator overrides are directionally correct
+- **Riskiest version:** Coordinators override the score based on stale intuition or bias; their overrides are no better than the model. If we then feed those overrides back as training signal, we make the copilot worse over time — a doom loop.
+- **Cheapest experiment:** In 4 pilot drives, log every CoordinatorOverride and compare against actual DriveOutcome. Compute agreement rate.
+- **Validated looks like:** Overrides agree with actual outcome ≥65% of the time (better than model baseline). Signal is worth feeding back.
+- **Invalidated looks like:** Overrides don't beat the model. Keep overrides for the coordinator's UX (they still need agency) but do NOT feed them back as training signal. Rethink the learning loop story.
 
 ## Assumptions we're comfortable with (strong evidence)
 
